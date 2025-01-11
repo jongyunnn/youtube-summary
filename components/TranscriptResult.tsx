@@ -48,14 +48,25 @@ export default function TranscriptResult({
         )}
       </div>
 
-      {summary && !isKorean && (
+      {(summary || translating) && !isKorean && (
         <div className="p-4 rounded-md bg-gray-50 dark:bg-gray-800/50">
-          <h3 className="text-lg font-semibold mb-4 dark:text-gray-200">
-            주요 내용 요약
-          </h3>
-          <div className="text-emerald-600 dark:text-emerald-400 whitespace-pre-wrap leading-relaxed">
-            {decodeHtml(summary)}
-          </div>
+          {summary && (
+            <>
+              <h3 className="text-lg font-semibold mb-4 dark:text-gray-200">
+                주요 내용 요약
+              </h3>
+              <div className="text-emerald-600 dark:text-emerald-400 whitespace-pre-wrap leading-relaxed">
+                {decodeHtml(summary)}
+              </div>
+            </>
+          )}
+          {translating && (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-blue-600 dark:text-blue-400">
+                번역 및 요약 중...
+              </div>
+            </div>
+          )}
         </div>
       )}
 

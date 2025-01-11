@@ -16,22 +16,22 @@ interface Transcript {
 
 type ViewMode = "timeline" | "text";
 
+interface TranslationState {
+  translations: string[];
+  summary: string;
+}
+
 export default function TranscriptForm() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("text");
-  
-  // Timeline mode states
-  const [timelineTranslations, setTimelineTranslations] = useState<string[]>([]);
-  const [timelineSummary, setTimelineSummary] = useState<string>("");
-  const [timelineTranslating, setTimelineTranslating] = useState(false);
-  
-  // Text mode states
-  const [textTranslation, setTextTranslation] = useState<string>("");
-  const [textSummary, setTextSummary] = useState<string>("");
-  const [textTranslating, setTextTranslating] = useState(false);
+  const [translationState, setTranslationState] = useState<TranslationState>({
+    translations: [],
+    summary: "",
+  });
+  const [translating, setTranslating] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,6 +63,34 @@ export default function TranscriptForm() {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTranslate = async (mode: "text" | "timeline") => {
+    setTranslating(true);
+    try {
+      const response = await fetch("/api/translate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          transcripts,
+          mode,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Translation failed");
+
+      const data = await response.json();
+      setTranslationState({
+        translations: data.translations,
+        summary: data.summary,
+      });
+    } catch (error) {
+      console.error("Translation error:", error);
+    } finally {
+      setTranslating(false);
     }
   };
 
@@ -124,66 +152,18 @@ export default function TranscriptForm() {
             {viewMode === "timeline" ? (
               <TranscriptResult
                 transcripts={transcripts}
-                translations={timelineTranslations}
-                summary={timelineSummary}
-                onTranslate={async () => {
-                  setTimelineTranslating(true);
-                  try {
-                    const response = await fetch("/api/translate", {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify({
-                        transcripts,
-                        mode: "timeline",
-                      }),
-                    });
-
-                    if (!response.ok) throw new Error("Translation failed");
-
-                    const data = await response.json();
-                    setTimelineTranslations(data.translations);
-                    setTimelineSummary(data.summary);
-                  } catch (error) {
-                    console.error("Translation error:", error);
-                  } finally {
-                    setTimelineTranslating(false);
-                  }
-                }}
-                translating={timelineTranslating}
+                translations={translationState.translations}
+                summary={translationState.summary}
+                onTranslate={() => handleTranslate("timeline")}
+                translating={translating}
               />
             ) : (
               <TranscriptText
                 transcripts={transcripts}
-                translation={textTranslation}
-                summary={textSummary}
-                onTranslate={async () => {
-                  setTextTranslating(true);
-                  try {
-                    const response = await fetch("/api/translate", {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify({
-                        transcripts,
-                        mode: "text",
-                      }),
-                    });
-
-                    if (!response.ok) throw new Error("Translation failed");
-
-                    const data = await response.json();
-                    setTextTranslation(data.translations[0]);
-                    setTextSummary(data.summary);
-                  } catch (error) {
-                    console.error("Translation error:", error);
-                  } finally {
-                    setTextTranslating(false);
-                  }
-                }}
-                translating={textTranslating}
+                translations={translationState.translations}
+                summary={translationState.summary}
+                onTranslate={() => handleTranslate("text")}
+                translating={translating}
               />
             )}
           </div>
