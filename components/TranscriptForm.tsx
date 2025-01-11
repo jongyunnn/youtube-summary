@@ -22,6 +22,16 @@ export default function TranscriptForm() {
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("text");
+  
+  // Timeline mode states
+  const [timelineTranslations, setTimelineTranslations] = useState<string[]>([]);
+  const [timelineSummary, setTimelineSummary] = useState<string>("");
+  const [timelineTranslating, setTimelineTranslating] = useState(false);
+  
+  // Text mode states
+  const [textTranslation, setTextTranslation] = useState<string>("");
+  const [textSummary, setTextSummary] = useState<string>("");
+  const [textTranslating, setTextTranslating] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,20 +110,81 @@ export default function TranscriptForm() {
                 onClick={() => setViewMode("text")}
                 variant={viewMode === "text" ? "default" : "ghost"}
               >
-                텍스트 보기
+                텍스트
               </Button>
               <Button
                 size="sm"
                 onClick={() => setViewMode("timeline")}
                 variant={viewMode === "timeline" ? "default" : "ghost"}
               >
-                타임라인 보기
+                타임라인
               </Button>
             </div>
+
             {viewMode === "timeline" ? (
-              <TranscriptResult transcripts={transcripts} />
+              <TranscriptResult
+                transcripts={transcripts}
+                translations={timelineTranslations}
+                summary={timelineSummary}
+                onTranslate={async () => {
+                  setTimelineTranslating(true);
+                  try {
+                    const response = await fetch("/api/translate", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        transcripts,
+                        mode: "timeline",
+                      }),
+                    });
+
+                    if (!response.ok) throw new Error("Translation failed");
+
+                    const data = await response.json();
+                    setTimelineTranslations(data.translations);
+                    setTimelineSummary(data.summary);
+                  } catch (error) {
+                    console.error("Translation error:", error);
+                  } finally {
+                    setTimelineTranslating(false);
+                  }
+                }}
+                translating={timelineTranslating}
+              />
             ) : (
-              <TranscriptText transcripts={transcripts} />
+              <TranscriptText
+                transcripts={transcripts}
+                translation={textTranslation}
+                summary={textSummary}
+                onTranslate={async () => {
+                  setTextTranslating(true);
+                  try {
+                    const response = await fetch("/api/translate", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        transcripts,
+                        mode: "text",
+                      }),
+                    });
+
+                    if (!response.ok) throw new Error("Translation failed");
+
+                    const data = await response.json();
+                    setTextTranslation(data.translations[0]);
+                    setTextSummary(data.summary);
+                  } catch (error) {
+                    console.error("Translation error:", error);
+                  } finally {
+                    setTextTranslating(false);
+                  }
+                }}
+                translating={textTranslating}
+              />
             )}
           </div>
         )}

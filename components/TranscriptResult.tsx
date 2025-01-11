@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { decodeHtml } from "@/lib/utils";
 import { Button } from "./ui/button";
 
@@ -12,46 +11,24 @@ interface Transcript {
 
 interface TranscriptResultProps {
   transcripts: Transcript[];
+  translations: string[];
+  summary: string;
+  onTranslate: () => Promise<void>;
+  translating: boolean;
   isKorean?: boolean;
 }
 
 export default function TranscriptResult({
   transcripts,
+  translations,
+  summary,
+  onTranslate,
+  translating,
   isKorean,
 }: TranscriptResultProps) {
-  const [translations, setTranslations] = useState<string[]>([]);
-  const [summary, setSummary] = useState<string>("");
-  const [loading, setLoading] = useState(false);
-
   if (!transcripts || transcripts.length === 0) {
     return null;
   }
-
-  const handleTranslate = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/translate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          transcripts,
-          mode: "timeline",
-        }),
-      });
-
-      if (!response.ok) throw new Error("Translation failed");
-
-      const data = await response.json();
-      setTranslations(data.translations);
-      setSummary(data.summary);
-    } catch (error) {
-      console.error("Translation error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="mt-8 space-y-6">
@@ -59,12 +36,12 @@ export default function TranscriptResult({
         <h2 className="text-xl font-bold dark:text-gray-100">타임라인</h2>
         {!isKorean && (
           <Button
-            onClick={handleTranslate}
-            disabled={loading || translations.length > 0}
+            onClick={onTranslate}
+            disabled={translating || translations.length > 0}
           >
             {translations.length > 0
               ? "번역됨"
-              : loading
+              : translating
               ? "번역중..."
               : "한국어로 번역"}
           </Button>
