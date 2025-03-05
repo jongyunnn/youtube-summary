@@ -6,6 +6,13 @@ import { extractVideoId } from "@/lib/utils";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 interface Transcript {
   text: string;
@@ -29,6 +36,7 @@ export default function TranscriptForm() {
     summary: "",
   });
   const [translating, setTranslating] = useState(false);
+  const [language, setLanguage] = useState("en");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +55,7 @@ export default function TranscriptForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ videoId }),
+        body: JSON.stringify({ videoId, lang: language }),
       });
 
       if (!response.ok) {
@@ -112,6 +120,18 @@ export default function TranscriptForm() {
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="language">언어 선택</Label>
+              <Select value={language} onValueChange={setLanguage}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="언어 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ko">한국어</SelectItem>
+                  <SelectItem value="en">영어 (English)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="url">YouTube URL</Label>
               <div className="w-full grid grid-cols-[1fr_108.555px] gap-3">
                 <Input
@@ -146,6 +166,7 @@ export default function TranscriptForm() {
             summary={translationState.summary}
             onTranslate={() => handleTranslate("text")}
             translating={translating}
+            isKorean={language === "ko"}
           />
         )}
       </div>
