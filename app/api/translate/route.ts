@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+async function summarizeText(text: string, apiKey: string) {
+  const openai = new OpenAI({
+    apiKey,
+  });
 
-async function summarizeText(text: string) {
   const completion = await openai.chat.completions.create({
     model: "gpt-4o",
     messages: [
@@ -33,7 +33,11 @@ async function summarizeText(text: string) {
 
 export async function POST(request: Request) {
   try {
-    const { transcripts, mode } = await request.json();
+    const { transcripts, mode, apiKey } = await request.json();
+
+    const openai = new OpenAI({
+      apiKey,
+    });
 
     // 텍스트 모드일 때는 전체 텍스트를 하나로 합쳐서 번역
     if (mode === "text") {
@@ -57,7 +61,7 @@ export async function POST(request: Request) {
       });
 
       const translation = completion.choices[0].message.content ?? "";
-      const summary = await summarizeText(translation);
+      const summary = await summarizeText(translation, apiKey);
 
       return NextResponse.json({
         translations: [translation],
@@ -98,7 +102,7 @@ export async function POST(request: Request) {
 
     // 타임라인 모드에서도 전체 번역본에 대한 요약 제공
     const fullTranslation = translations.join(" ");
-    const summary = await summarizeText(fullTranslation);
+    const summary = await summarizeText(fullTranslation, apiKey);
 
     return NextResponse.json({ translations, summary });
   } catch (error) {

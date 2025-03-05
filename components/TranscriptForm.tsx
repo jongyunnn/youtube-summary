@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import TranscriptResult from "./TranscriptResult";
 import TranscriptText from "./TranscriptText";
 import { extractVideoId } from "@/lib/utils";
 import { Label } from "./ui/label";
@@ -14,19 +13,17 @@ interface Transcript {
   offset: number;
 }
 
-type ViewMode = "timeline" | "text";
-
 interface TranslationState {
   translations: string[];
   summary: string;
 }
 
 export default function TranscriptForm() {
+  const [apiKey, setApiKey] = useState("");
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("text");
   const [translationState, setTranslationState] = useState<TranslationState>({
     translations: [],
     summary: "",
@@ -77,6 +74,7 @@ export default function TranscriptForm() {
         body: JSON.stringify({
           transcripts,
           mode,
+          apiKey,
         }),
       });
 
@@ -96,12 +94,23 @@ export default function TranscriptForm() {
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <div className="space-y-8">
-        <div className="space-y-4">
+      <div className="space-y-10">
+        <div className="space-y-10">
           <h1 className="text-2xl font-bold dark:text-gray-100">
-            YouTube 자막 추출기
+            YouTube 요약
           </h1>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="url">Api Key</Label>
+              <Input
+                type="password"
+                id="apiKey"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="OpenAI API Key"
+                required
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="url">YouTube URL</Label>
               <div className="w-full grid grid-cols-[1fr_108.555px] gap-3">
@@ -131,42 +140,13 @@ export default function TranscriptForm() {
         </div>
 
         {transcripts.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                onClick={() => setViewMode("text")}
-                variant={viewMode === "text" ? "default" : "ghost"}
-              >
-                텍스트
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => setViewMode("timeline")}
-                variant={viewMode === "timeline" ? "default" : "ghost"}
-              >
-                타임라인
-              </Button>
-            </div>
-
-            {viewMode === "timeline" ? (
-              <TranscriptResult
-                transcripts={transcripts}
-                translations={translationState.translations}
-                summary={translationState.summary}
-                onTranslate={() => handleTranslate("timeline")}
-                translating={translating}
-              />
-            ) : (
-              <TranscriptText
-                transcripts={transcripts}
-                translations={translationState.translations}
-                summary={translationState.summary}
-                onTranslate={() => handleTranslate("text")}
-                translating={translating}
-              />
-            )}
-          </div>
+          <TranscriptText
+            transcripts={transcripts}
+            translations={translationState.translations}
+            summary={translationState.summary}
+            onTranslate={() => handleTranslate("text")}
+            translating={translating}
+          />
         )}
       </div>
     </div>

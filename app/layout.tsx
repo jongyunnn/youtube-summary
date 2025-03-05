@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "영상 자막 추출",
-  description: "YouTube와 Vimeo 영상의 자막을 추출하고 번역합니다.",
+  title: "Youtube Summary",
+  description: "YouTube와 영상의 자막을 번역하고 요약합니다.",
 };
 
 export default function RootLayout({
